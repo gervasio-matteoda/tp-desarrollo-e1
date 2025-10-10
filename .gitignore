@@ -1,0 +1,25 @@
+# Archivos generados por el Sistema Operativo y Editores de Texto
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.tmp
+
+# Archivos de Logs
+*.log
+
+# Java y Maven
+# Archivos compilados de Java
+*.class
+# Directorio de salida de Maven
+target/
+# Archivos del Maven Wrapper (si se usa)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Datos de la Aplicación
+data/
+
+# Configuraciones de IDEs
+.vscode/

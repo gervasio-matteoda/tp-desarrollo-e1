@@ -5,9 +5,9 @@ public class Pais {
     private int id;
     private String nombre;
 
-    public Pais(String nombre, int id) {
-        this.id = id;
-        this.nombre = nombre;
+    private Pais(Builder builder) {
+        this.id = builder.id;
+        this.nombre = builder.nombre;
     }
 
     // Setters
@@ -17,4 +17,24 @@ public class Pais {
     // Getters
     public int getId() { return id; }
     public String getNombre() { return nombre; }
+
+    // Builder
+    public static class Builder {
+        private int id;
+        private String nombre;
+
+        public Builder id(int id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder nombre(String nombre) {
+            this.nombre = nombre;
+            return this;
+        }
+
+        public Pais build() {
+            return new Pais(this);
+        }
+    }
 }

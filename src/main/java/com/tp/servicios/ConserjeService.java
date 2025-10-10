@@ -14,11 +14,11 @@ public class ConserjeService {
     private static ConserjeService instancia;
     private IConserjeDAO conserjeDAO;
 
-    private ConserjeService() throws PersistenciaException {
+    private ConserjeService() {
         this.conserjeDAO = DAOFactory.getConserjeDAO();
     }
 
-    public static ConserjeService getInstancia() throws PersistenciaException {
+    public static ConserjeService getInstancia() {
         if (instancia == null) {
             instancia = new ConserjeService();
         }

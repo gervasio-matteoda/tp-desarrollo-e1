@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -25,19 +24,19 @@ import java.util.stream.Collectors;
 
 public class HuespedArchivoDAO implements IHuespedDAO{
 
-    private final String RUTA_ARCHIVO = "data/huespedes.csv";
+    private static HuespedArchivoDAO instancia;
+    private final Path RUTA_ARCHIVO = Paths.get("data/huespedes.csv");
     private final String SEPARADOR = ",";
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public HuespedArchivoDAO() throws PersistenciaException {
-        try {
-            Path path = Paths.get("data");
-            if (!Files.exists(path)) {
-                Files.createDirectories(path);
-            }
-        } catch (IOException e) {
-            throw new PersistenciaException("Error al crear el directorio de datos para huéspedes.", e);
+    private HuespedArchivoDAO() { }
+
+    // Singleton
+    public static HuespedArchivoDAO getInstancia() {
+        if (instancia == null) {
+            instancia = new HuespedArchivoDAO();
         }
+        return instancia;
     }
 
     // Convierte un objeto Huesped a una línea de texto para el archivo
@@ -59,17 +58,17 @@ public class HuespedArchivoDAO implements IHuespedDAO{
         );
     }
 
-    // Convierte una línea de texto a un objeto Conserje
+    // Convierte una línea de texto a un objeto Huesped (usando Builders)
     private Huesped mapToHuesped(String linea) throws PersistenciaException {
-        String[] datos = linea.split(SEPARADOR, -1); // -1 para incluir campos vacíos al final
+        String[] datos = linea.split(SEPARADOR, -1);
 
         try {
             LocalDate fechaNac = !datos[5].isEmpty() ? LocalDate.parse(datos[5], DATE_FORMATTER) : null;
 
-            // Reconstruimos los objetos anidados desde el nivel más bajo
-            Pais pais = new Pais(datos[15], 0); // El ID es irrelevante al leer, se usa el nombre
-            Provincia provincia = new Provincia(datos[14], 0, pais);
-            Ciudad ciudad = new Ciudad(datos[13], 0, provincia);
+            // Construcción de Ciudad, Provincia y Pais usando Builders
+            Pais pais = new Pais.Builder().nombre(datos[15]).id(0).build();
+            Provincia provincia = new Provincia.Builder().nombre(datos[14]).id(0).pais(pais).build();
+            Ciudad ciudad = new Ciudad.Builder().nombre(datos[13]).id(0).provincia(provincia).build();
 
             Direccion direccion = new Direccion.Builder()
                 .calle(datos[9])
@@ -95,12 +94,9 @@ public class HuespedArchivoDAO implements IHuespedDAO{
 
     // Escribe una lista de huespedes al archivo, sobreescribiendo el contenido
     private void escribirArchivo(List<Huesped> huespedes) throws PersistenciaException {
-        Path path = Paths.get(RUTA_ARCHIVO);
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            // Cabecera del archivo CSV
+        try (BufferedWriter writer = Files.newBufferedWriter(RUTA_ARCHIVO)) {
             writer.write("nombre,apellido,cuit,tipoDoc,nroDoc,fechaNac,email,telefono,ocupacion,calle,nroCalle,depto,codPostal,ciudad,provincia,pais");
             writer.newLine();
-
             for (Huesped h : huespedes) {
                 writer.write(huespedToLinea(h));
                 writer.newLine();
@@ -157,13 +153,18 @@ public class HuespedArchivoDAO implements IHuespedDAO{
     @Override
     public List<Huesped> findAll() throws PersistenciaException {
         
-        Path path = Paths.get(RUTA_ARCHIVO);
-        if (!Files.exists(path)) {
-            return new ArrayList<>();
-        }
-
         try {
-            return Files.lines(path)
+
+            if (!Files.exists(RUTA_ARCHIVO) || (Files.exists(RUTA_ARCHIVO) && Files.size(RUTA_ARCHIVO) == 0)) {
+            return new ArrayList<>();
+            }
+            
+            List<String> lineas = Files.readAllLines(RUTA_ARCHIVO);
+            if (lineas.isEmpty()) {
+                return new ArrayList<>(); // Si estaba vacío.
+            }
+
+            return lineas.stream()
                     .skip(1)
                     .filter(line -> !line.isBlank())
                     .map(line -> {

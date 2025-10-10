@@ -15,19 +15,19 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ConserjeArchivoDAO implements IConserjeDAO {
-
-    private final String RUTA_ARCHIVO = "data/conserjes.csv";
+    
+    private static ConserjeArchivoDAO instancia;
+    private final Path RUTA_ARCHIVO = Paths.get("data/conserjes.csv");
     private final String SEPARADOR = ",";
 
-    public ConserjeArchivoDAO() throws PersistenciaException {
-        try {
-            Path path = Paths.get("data");
-            if (!Files.exists(path)) {
-                Files.createDirectories(path);
-            }
-        } catch (IOException e) {
-            throw new PersistenciaException("Error al crear el directorio de datos.", e);
+    private ConserjeArchivoDAO() { }
+
+    // Singleton
+    public static ConserjeArchivoDAO getInstancia() {
+        if (instancia == null) {
+            instancia = new ConserjeArchivoDAO();
         }
+        return instancia;
     }
 
     // Convierte una línea de texto a un objeto Conserje
@@ -44,8 +44,7 @@ public class ConserjeArchivoDAO implements IConserjeDAO {
     // Escribe una lista de conserjes al archivo, sobreescribiendo el contenido
     private void escribirArchivo(List<Conserje> conserjes) throws PersistenciaException {
         
-        Path path = Paths.get(RUTA_ARCHIVO);
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(RUTA_ARCHIVO)) {
             
             writer.write("usuario,contrasenia,nombre,apellido");
             writer.newLine();
@@ -85,19 +84,25 @@ public class ConserjeArchivoDAO implements IConserjeDAO {
         if (!eliminado) {
             throw new EntidadNoEncontradaException("No se encontró un conserje para eliminar con el usuario: " + conserje.getUsuario());
         }
-        escribirArchivo(conserjes); // Dejamos que la PersistenciaException suba.
+        escribirArchivo(conserjes);
     }
 
     @Override
     public List<Conserje> findAll() throws PersistenciaException {
         
-        Path path = Paths.get(RUTA_ARCHIVO);
-        if (!Files.exists(path)) {
-            return new ArrayList<>();
-        }
-
         try {
-            return Files.lines(path)
+        
+            if (!Files.exists(RUTA_ARCHIVO) || (Files.exists(RUTA_ARCHIVO) && Files.size(RUTA_ARCHIVO) == 0)) {
+                return new ArrayList<>();
+            }
+            
+            List<String> lineas = Files.readAllLines(RUTA_ARCHIVO);
+            
+            if (lineas.isEmpty()) {
+                return new ArrayList<>(); 
+            }
+
+            return lineas.stream()
                     .skip(1)
                     .filter(line -> !line.isBlank())
                     .map(this::mapToConserje)

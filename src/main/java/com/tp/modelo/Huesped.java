@@ -1,6 +1,6 @@
 package com.tp.modelo;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Huesped {
 
@@ -9,7 +9,7 @@ public class Huesped {
     private String cuit;
     private TipoDocumento tipoDocumento;
     private String nroDocumento;
-    private Date fechaDeNaciemiento;
+    private LocalDate fechaDeNacimiento;
     private String email;
     private String telefono;
     private String ocupacion;
@@ -21,7 +21,7 @@ public class Huesped {
         this.cuit = builder.cuit;
         this.tipoDocumento = builder.tipoDocumento;
         this.nroDocumento = builder.nroDocumento;
-        this.fechaDeNaciemiento = builder.fechaDeNaciemiento;
+        this.fechaDeNacimiento = builder.fechaDeNacimiento;
         this.email = builder.email;
         this.telefono = builder.telefono;
         this.ocupacion = builder.ocupacion;
@@ -34,7 +34,7 @@ public class Huesped {
     public void setCuit(String cuit) { this.cuit = cuit; }
     public void setTipoDocumento(TipoDocumento tipoDocumento) { this.tipoDocumento = tipoDocumento; }
     public void setNroDocumento(String nroDocumento) { this.nroDocumento = nroDocumento; }
-    public void setFechaDeNaciemiento(Date fechaDeNaciemiento) { this.fechaDeNaciemiento = fechaDeNaciemiento; }
+    public void setFechaDeNaciemiento(LocalDate fechaDeNacimiento) { this.fechaDeNacimiento = fechaDeNacimiento; }
     public void setEmail(String email) { this.email = email; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public void setOcupacion(String ocupacion) { this.ocupacion = ocupacion; }
@@ -46,7 +46,7 @@ public class Huesped {
     public String getCuit() { return cuit; }
     public TipoDocumento getTipoDocumento() { return tipoDocumento; }
     public String getNroDocumento() { return nroDocumento; }
-    public Date getFechaDeNaciemiento() { return fechaDeNaciemiento; }
+    public LocalDate getFechaDeNacimiento() { return fechaDeNacimiento; }
     public String getEmail() { return email; }
     public String getTelefono() { return telefono; }
     public String getOcupacion() { return ocupacion; }
@@ -63,7 +63,7 @@ public class Huesped {
         private String cuit;
         private TipoDocumento tipoDocumento;
         private String nroDocumento;
-        private Date fechaDeNaciemiento;
+        private LocalDate fechaDeNacimiento;
         private String email;
         private String telefono;
         private String ocupacion;
@@ -89,8 +89,8 @@ public class Huesped {
             this.nroDocumento = nroDocumento;
             return this;
         }
-        public Builder fechaDeNaciemiento(Date fechaDeNaciemiento) {
-            this.fechaDeNaciemiento = fechaDeNaciemiento;
+        public Builder fechaDeNacimiento(LocalDate fechaDeNacimiento) {
+            this.fechaDeNacimiento = fechaDeNacimiento;
             return this;
         }
         public Builder email(String email) {

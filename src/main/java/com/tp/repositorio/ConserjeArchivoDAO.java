@@ -67,8 +67,8 @@ public class ConserjeArchivoDAO implements IConserjeDAO {
     public void create(Conserje conserje) throws EntidadDuplicadaException, PersistenciaException {
         
         List<Conserje> conserjes = findAll();
-        
-        if (conserjes.stream().anyMatch(c -> c.getUsuario().equals(conserje.getUsuario()))) {
+        boolean duplicado = conserjes.stream().anyMatch(c -> c.getUsuario().equals(conserje.getUsuario()));
+        if (duplicado) {
             throw new EntidadDuplicadaException("Ya existe un conserje con el usuario: " + conserje.getUsuario());
         }
         conserjes.add(conserje);

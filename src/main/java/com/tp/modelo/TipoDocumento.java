@@ -2,7 +2,7 @@ package com.tp.modelo;
 
 public class TipoDocumento {
 
-    public enum tipoDocumentoEnum {DNI, PASAPORTE, CUIT, CUIL, OTRO}
+    public enum tipoDocumentoEnum {DNI, PASAPORTE,LE, LC, OTRO}
 
     private tipoDocumentoEnum tipo;
     private String id;

@@ -63,27 +63,15 @@ public class ConserjeArchivoDAO implements IConserjeDAO {
 
 
     @Override
-    public void create(Conserje conserje) throws EntidadDuplicadaException, PersistenciaException {
-        
+    public void create(Conserje conserje) throws PersistenciaException{
         List<Conserje> conserjes = findAll();
-        boolean duplicado = conserjes.stream().anyMatch(c -> c.getUsuario().equals(conserje.getUsuario()));
-        if (duplicado) {
-            throw new EntidadDuplicadaException("Ya existe un conserje con el usuario: " + conserje.getUsuario());
-        }
         conserjes.add(conserje);
         escribirArchivo(conserjes);
     }
     
 
     @Override
-    public void delete(Conserje conserje) throws EntidadNoEncontradaException, PersistenciaException {
-        
-        List<Conserje> conserjes = findAll();
-        boolean eliminado = conserjes.removeIf(c -> c.getUsuario().equals(conserje.getUsuario()));
-
-        if (!eliminado) {
-            throw new EntidadNoEncontradaException("No se encontró un conserje para eliminar con el usuario: " + conserje.getUsuario());
-        }
+    public void delete(List<Conserje> conserjes) throws PersistenciaException {
         escribirArchivo(conserjes);
     }
 

@@ -10,5 +10,5 @@ public interface IConserjeDAO {
     public void create(Conserje conserje) throws EntidadDuplicadaException, PersistenciaException;
     public List<Conserje> findBy(Predicate<Conserje> filtro) throws PersistenciaException; 
 	public List<Conserje> findAll() throws PersistenciaException;
-    public void delete(Conserje conserje) throws EntidadNoEncontradaException, PersistenciaException;
+    public void delete(List<Conserje> conserje) throws EntidadNoEncontradaException, PersistenciaException;
 }

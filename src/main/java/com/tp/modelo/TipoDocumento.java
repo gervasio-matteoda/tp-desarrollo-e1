@@ -12,6 +12,8 @@ public class TipoDocumento {
         this.id = id;
     }
 
+    public TipoDocumento() {}
+
     // Setters
     public void setTipo(tipoDocumentoEnum tipo) { this.tipo = tipo; }
     public void setId(String id) { this.id = id; }
@@ -19,4 +21,9 @@ public class TipoDocumento {
     // Getters
     public tipoDocumentoEnum getTipo() { return tipo; }
     public String getId() { return id; } 
+
+    //Metodos
+    @Override
+    public String toString(){return tipo.toString();}
+    public tipoDocumentoEnum valueOf(String tipo){ return tipoDocumentoEnum.valueOf(tipo); }
 }

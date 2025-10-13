@@ -1,16 +1,20 @@
-package com.tp.modelo;
+package com.tp.dto;
 
-public class Direccion {
+import com.tp.modelo.Ciudad;
+import com.tp.modelo.Direccion;
 
+public class DireccionDTO {
     private String id;
     private int codigoPostal;
     private String calle;
     private int nroCalle;
     private int nroDepartamento;
     private int nroPiso;
-    private Ciudad ciudad;
+    private String ciudad;
+    private String provincia;
+    private String pais;
 
-    private Direccion(Builder builder){
+    private DireccionDTO(Builder builder){
         this.id = builder.id;
         this.codigoPostal = builder.codigoPostal;
         this.calle = builder.calle;
@@ -18,6 +22,8 @@ public class Direccion {
         this.nroDepartamento = builder.nroDepartamento;
         this.nroPiso = builder.nroPiso;
         this.ciudad = builder.ciudad;
+        this.provincia = builder.provincia;
+        this.pais = builder.pais;
     }
 
     //Setters
@@ -27,7 +33,9 @@ public class Direccion {
     public void setNroCalle(int nroCalle) {this.nroCalle = nroCalle;}
     public void setNroDepartamento(int nroDepartamento) {this.nroDepartamento = nroDepartamento;}
     public void setNroPiso(int nroPiso) {this.nroPiso = nroPiso;}
-    public void setCiudad(Ciudad ciudad) {this.ciudad = ciudad;}
+    public void setCiudad(String ciudad) {this.ciudad = ciudad;}
+    public void setProvincia(String provincia) {this.provincia = provincia;}
+    public void setPais(String pais) {this.pais = pais;}
 
     //Getters
     public String getId() {return id;}
@@ -36,7 +44,9 @@ public class Direccion {
     public int getNroCalle() {return nroCalle;}
     public int getNroDepartamento() {return nroDepartamento;}
     public int getNroPiso() {return nroPiso;}
-    public Ciudad getCiudad() {return ciudad;}
+    public String getCiudad() {return ciudad;}
+    public String getProvincia() {return provincia;}
+    public String getPais() {return pais;}
     
 
     public static class Builder {
@@ -46,13 +56,14 @@ public class Direccion {
         private int nroCalle;
         private int nroDepartamento;
         private int nroPiso;
-        private Ciudad ciudad;
+        private String ciudad;
+        private String provincia;
+        private String pais;
 
         public Builder id(String id){
             this.id = id;
             return this;
         }
-
         public Builder codigoPostal(int codigoPostal){
             this.codigoPostal = codigoPostal;
             return this;
@@ -78,13 +89,23 @@ public class Direccion {
             return this;
         }
 
-        public Builder ciudad(Ciudad ciudad){
+        public Builder ciudad(String ciudad){
             this.ciudad = ciudad;
             return this;
         }
 
-        public Direccion build(){
-            return new Direccion(this);
+        public Builder provincia(String provincia){
+            this.provincia = provincia;
+            return this;
+        }
+
+        public Builder pais(String pais){
+            this.pais = pais;
+            return this;
+        }
+
+        public DireccionDTO build(){
+            return new DireccionDTO(this);
         }
     }
 }

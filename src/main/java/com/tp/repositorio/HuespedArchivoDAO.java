@@ -1,12 +1,12 @@
 package com.tp.repositorio;
 
-import com.tp.modelo.Ciudad;
+
 import com.tp.modelo.Direccion;
 import com.tp.modelo.Huesped;
-import com.tp.modelo.Pais;
-import com.tp.modelo.Provincia;
 import com.tp.modelo.TipoDocumento;
 import com.tp.persistencia.IHuespedDAO;
+import com.tp.servicios.DireccionService;
+import com.tp.servicios.HuespedService;
 import com.tp.excepciones.*;
 
 import java.io.BufferedWriter;
@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 public class HuespedArchivoDAO implements IHuespedDAO{
 
     private static HuespedArchivoDAO instancia;
+    private HuespedService huespedService = HuespedService.getInstancia();
+    private DireccionService direccionService = DireccionService.getInstancia();
     private final Path RUTA_ARCHIVO = Paths.get("data/huespedes.csv");
     private final String SEPARADOR = ",";
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -44,41 +46,26 @@ public class HuespedArchivoDAO implements IHuespedDAO{
         String fechaNacStr = (h.getFechaDeNacimiento() != null) 
             ? h.getFechaDeNacimiento().format(DATE_FORMATTER) : "";
         Direccion dir = h.getDireccion();
-        Ciudad ciu = dir.getCiudad();
-        Provincia pro = ciu.getProvincia();
-        Pais pa = pro.getPais();
 
         return String.join(SEPARADOR,
                 h.getNombre(), h.getApellido(), h.getCuit(),
                 h.getTipoDocumento().getTipo().name(), h.getNroDocumento(),
                 fechaNacStr, h.getEmail(), h.getTelefono(), h.getOcupacion(),
-                dir.getCalle(), String.valueOf(dir.getNroCalle()),
-                String.valueOf(dir.getNroDepartamento()), String.valueOf(dir.getCodigoPostal()),
-                ciu.getNombre(), pro.getNombre(), pa.getNombre()
+                dir.getId()
         );
     }
 
     // Convierte una línea de texto a un objeto Huesped (usando Builders)
-    private Huesped mapToHuesped(String linea) throws PersistenciaException {
+    private Huesped mapToHuesped(String linea) throws  Exception{
         String[] datos = linea.split(SEPARADOR, -1);
 
         try {
             LocalDate fechaNac = !datos[5].isEmpty() ? LocalDate.parse(datos[5], DATE_FORMATTER) : null;
 
-            // Construcción de Ciudad, Provincia y Pais usando Builders
-            Pais pais = new Pais.Builder().nombre(datos[15]).id(0).build();
-            Provincia provincia = new Provincia.Builder().nombre(datos[14]).id(0).pais(pais).build();
-            Ciudad ciudad = new Ciudad.Builder().nombre(datos[13]).id(0).provincia(provincia).build();
 
-            Direccion direccion = new Direccion.Builder()
-                .calle(datos[9])
-                .nroCalle(Integer.parseInt(datos[10]))
-                .nroDepartamento(Integer.parseInt(datos[11]))
-                .codigoPostal(Integer.parseInt(datos[12]))
-                .ciudad(ciudad)
-                .build();
+            Direccion direccion = direccionService.obtenerDireccion(datos[9]);
             
-            TipoDocumento tipoDoc = new TipoDocumento(TipoDocumento.tipoDocumentoEnum.valueOf(datos[3]), "");
+            TipoDocumento tipoDoc = huespedService.buscarTipoDocumento(datos[3]);
 
             return new Huesped.Builder()
                 .nombre(datos[0]).apellido(datos[1]).cuit(datos[2])
@@ -92,10 +79,12 @@ public class HuespedArchivoDAO implements IHuespedDAO{
         }
     }
 
+    
+
     // Escribe una lista de huespedes al archivo, sobreescribiendo el contenido
     private void escribirArchivo(List<Huesped> huespedes) throws PersistenciaException {
         try (BufferedWriter writer = Files.newBufferedWriter(RUTA_ARCHIVO)) {
-            writer.write("nombre,apellido,cuit,tipoDoc,nroDoc,fechaNac,email,telefono,ocupacion,calle,nroCalle,depto,codPostal,ciudad,provincia,pais");
+            writer.write("nombre,apellido,cuit,tipoDoc,nroDoc,fechaNac,email,telefono,ocupacion,idDireccion");
             writer.newLine();
             for (Huesped h : huespedes) {
                 writer.write(huespedToLinea(h));
@@ -171,6 +160,10 @@ public class HuespedArchivoDAO implements IHuespedDAO{
                         try {
                             return mapToHuesped(line);
                         } catch (PersistenciaException e) {
+                            throw new RuntimeException(e);
+                        } catch (ValidacionException e) {
+                            throw new RuntimeException(e);
+                        } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     })

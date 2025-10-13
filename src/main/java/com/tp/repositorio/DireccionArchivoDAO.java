@@ -22,7 +22,6 @@ import com.tp.servicios.GeoService;
 public class DireccionArchivoDAO implements IDireccionDAO {
 
     private static DireccionArchivoDAO instancia;
-    private GeoService geoService = GeoService.getInstancia();
     private final Path RUTA_ARCHIVO = Paths.get("data/direcciones.csv");
     private final String SEPARADOR = ",";
 
@@ -38,6 +37,7 @@ public class DireccionArchivoDAO implements IDireccionDAO {
 
     // Convierte una línea de texto a un objeto Direccion
     private Direccion mapToDireccion(String linea) throws PersistenciaException, ValidacionException {
+        GeoService geoService = GeoService.getInstancia();
         String[] datos = linea.split(SEPARADOR);
         try {
             Ciudad ciudad = geoService.obtenerCiudad(Integer.parseInt(datos[6]));
@@ -87,7 +87,7 @@ public class DireccionArchivoDAO implements IDireccionDAO {
     }
 
     @Override
-    public void create(Direccion direccion) throws PersistenciaException{
+    public Direccion create(Direccion direccion) throws PersistenciaException{
         List<Direccion> direcciones = findAll();
         Optional<Integer> maxId = direcciones.stream()
             .map(Direccion -> Integer.parseInt(Direccion.getId()))
@@ -96,6 +96,7 @@ public class DireccionArchivoDAO implements IDireccionDAO {
         direccion.setId(Integer.toString(nuevoId));
         direcciones.add(direccion);
         escribirArchivo(direcciones);
+        return direccion;
     }
 
     @Override

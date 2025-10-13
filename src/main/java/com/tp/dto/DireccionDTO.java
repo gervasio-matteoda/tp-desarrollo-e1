@@ -1,8 +1,5 @@
 package com.tp.dto;
 
-import com.tp.modelo.Ciudad;
-import com.tp.modelo.Direccion;
-
 public class DireccionDTO {
     private String id;
     private int codigoPostal;

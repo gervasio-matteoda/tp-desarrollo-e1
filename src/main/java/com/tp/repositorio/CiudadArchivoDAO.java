@@ -18,7 +18,6 @@ import com.tp.servicios.GeoService;
 public class CiudadArchivoDAO implements ICiudadDAO {
 
     private static CiudadArchivoDAO instancia;
-    private GeoService geoService = GeoService.getInstancia();
     private final Path RUTA_ARCHIVO = Paths.get("data/ciudades.csv");
     private final String SEPARADOR = ",";
 
@@ -34,6 +33,7 @@ public class CiudadArchivoDAO implements ICiudadDAO {
 
     //Convierte una linea de texto a un objeto Ciudad
     private Ciudad mapToCiudad(String linea) throws PersistenciaException, ValidacionException {
+        GeoService geoService = GeoService.getInstancia();
         String[] datos = linea.split(SEPARADOR);
         try {
             Provincia provincia = geoService.obtenerProvincia(Integer.parseInt(datos[2])); 

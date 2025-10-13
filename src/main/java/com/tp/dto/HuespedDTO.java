@@ -54,7 +54,7 @@ public class HuespedDTO {
     public DireccionDTO getDireccion() { return direccion; }
 
     // Metodos
-    public String toString(){return apellido + "," + nombre;}
+    public String toString(){return apellido + ", " + nombre + ", " + tipoDocumento.toString() + ", " + nroDocumento;}
 
 
     // Builder

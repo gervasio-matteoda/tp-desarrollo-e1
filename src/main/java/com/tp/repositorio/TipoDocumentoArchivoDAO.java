@@ -16,7 +16,7 @@ import com.tp.persistencia.ITipoDocumento;
 public class TipoDocumentoArchivoDAO implements ITipoDocumento {
 
     private static TipoDocumentoArchivoDAO instancia;
-    private final Path RUTA_ARCHIVO = Paths.get("data/tipos_documento.txt");
+    private final Path RUTA_ARCHIVO = Paths.get("data/tipos_documento.csv");
     private final String SEPARADOR = ",";
     
     private TipoDocumentoArchivoDAO() { }
@@ -33,7 +33,7 @@ public class TipoDocumentoArchivoDAO implements ITipoDocumento {
     private TipoDocumento mapToTipoDocumento(String linea) throws PersistenciaException {
         String[] datos = linea.split(SEPARADOR, -1);
         try {
-            return new TipoDocumento(TipoDocumento.tipoDocumentoEnum.valueOf(datos[0]), datos[1]);
+            return new TipoDocumento(TipoDocumento.tipoDocumentoEnum.valueOf(datos[1]), datos[0]);
         } catch (IllegalArgumentException e) {
             throw new PersistenciaException("Error al parsear la línea del archivo de tipos de documento: " + linea, e);
         }

@@ -29,4 +29,8 @@ public class DAOFactory {
     public static ICiudadDAO getCiudadDAO() {
         return CiudadArchivoDAO.getInstancia();
     }
+
+    public static ITipoDocumento gTipoDocumentoDAO(){
+        return TipoDocumentoArchivoDAO.getInstancia();
+    }
 }

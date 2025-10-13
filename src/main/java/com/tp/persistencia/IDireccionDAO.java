@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 
 public interface IDireccionDAO {
 
-    public void create(Direccion direccion) throws PersistenciaException;
+    public Direccion create(Direccion direccion) throws PersistenciaException;
     public void update(Direccion direccion) throws EntidadNoEncontradaException, PersistenciaException;
     public List<Direccion> findBy(Predicate<Direccion> filtro) throws PersistenciaException;
     public List<Direccion> findAll() throws PersistenciaException; 

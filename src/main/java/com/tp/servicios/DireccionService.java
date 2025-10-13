@@ -24,11 +24,12 @@ public class DireccionService {
         return instancia;
     }
 
-    public void registrarDireccion(DireccionDTO direccionDTO) throws NegocioException{
+    public DireccionDTO registrarDireccion(DireccionDTO direccionDTO) throws NegocioException{
         try {
             validarDireccion(direccionDTO);
             Direccion direccion = mapDTOToDireccion(direccionDTO);
-            direccionDAO.create(direccion);
+            direccion = direccionDAO.create(direccion);
+            return mapDireccionToDTO(direccion);
         } catch (ValidacionException | PersistenciaException e) {
             throw new NegocioException("No se pudo registrar la direccion.", e);
         }
@@ -43,6 +44,16 @@ public class DireccionService {
             direccionDAO.delete(mapDTOToDireccion(direccionDTO));
         } catch (EntidadNoEncontradaException e) {
             throw new NegocioException("No se pudo eliminar la direccion. " + e.getMessage(), e);
+        }
+    }
+
+    public void modificarDireccion(DireccionDTO direccionDTO) throws NegocioException {
+        try {
+            validarDireccion(direccionDTO);
+            Direccion direccion = mapDTOToDireccion(direccionDTO);
+            direccionDAO.update(direccion);
+        } catch (ValidacionException | PersistenciaException e) {
+            throw new NegocioException("No se pudo modificar la direccion.", e);
         }
     }
 

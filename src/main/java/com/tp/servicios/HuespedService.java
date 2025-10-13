@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.tp.dto.DireccionDTO;
 import com.tp.dto.HuespedDTO;
 import com.tp.excepciones.*;
 import com.tp.modelo.Huesped;
@@ -20,6 +21,7 @@ public class HuespedService {
 
     private HuespedService() {
         this.huespedDAO = DAOFactory.getHuespedDAO();
+        this.tipoDocumentoDAO = DAOFactory.gTipoDocumentoDAO();
     }
     
     public static HuespedService getInstancia() {
@@ -29,31 +31,70 @@ public class HuespedService {
         return instancia;
     }
 
-    public void registrarHuesped(HuespedDTO huespedDTO) throws NegocioException{
+    public void registrarHuesped(HuespedDTO huespedDTO) throws NegocioException, PersistenciaException{
+            Huesped huesped;
         try {
             validarHuesped(huespedDTO);
-            Huesped huesped = mapDTOToHuesped(huespedDTO);
-            direccionService.registrarDireccion(huespedDTO.getDireccion());
-            huespedDAO.create(huesped);
+            existeHuesped(huespedDTO);
+            Huesped h = mapDTOToHuesped(huespedDTO);
+            DireccionDTO direccion = direccionService.registrarDireccion(huespedDTO.getDireccion());
+            h.getDireccion().setId(direccion.getId());
+            huesped = h;
         } catch (ValidacionException | PersistenciaException e) {
+            throw new NegocioException("No se pudo registrar la direccion o huesped invalido", e);
+        }
+        try {
+            huespedDAO.create(huesped);
+        } catch (PersistenciaException e) {
+            direccionService.eliminarDireccion(huespedDTO.getDireccion());
             throw new NegocioException("No se pudo registrar el huesped.", e);
         }
         
     }
 
+    public void eliminarHuesped(HuespedDTO huespedDTO) throws NegocioException, ValidacionException, PersistenciaException {
+        if(huespedDTO == null || huespedDTO.getNroDocumento().isBlank() || huespedDTO.getTipoDocumento().isBlank()) {
+            throw new ValidacionException("El huesped a eliminar no puede ser nulo o tener el numero de documento o tipo de documento vacio");
+        }
+        try {
+            validarHuesped(huespedDTO);
+            Huesped huesped = huespedDAO.findBy(h -> 
+                h.getNroDocumento().equalsIgnoreCase(huespedDTO.getNroDocumento()) && 
+                h.getTipoDocumento().getTipo().toString().equalsIgnoreCase(huespedDTO.getTipoDocumento())
+            )
+            .stream()
+            .findFirst()
+            .orElseThrow(() -> new EntidadNoEncontradaException("No existe un huesped con el tipo y numero de documento proporcionado."));
+            
+            
+            huespedDAO.delete(huesped);
+            direccionService.eliminarDireccion(huespedDTO.getDireccion());
+        } catch (EntidadNoEncontradaException e) {
+            throw new NegocioException("No se pudo eliminar el huesped. " + e.getMessage(), e);
+        }
+    }
+
+    public void modificarHuesped(HuespedDTO huespedDTO) throws NegocioException, ValidacionException, PersistenciaException {
+        if(huespedDTO == null || huespedDTO.getNroDocumento().isBlank() || huespedDTO.getTipoDocumento().isBlank()) {
+            throw new ValidacionException("El huesped a modificar no puede ser nulo o tener el numero de documento o tipo de documento vacio");
+        }
+        try {
+            validarHuesped(huespedDTO);
+            Huesped huesped = mapDTOToHuesped(huespedDTO);
+            direccionService.modificarDireccion(huespedDTO.getDireccion());
+            huespedDAO.update(huesped);
+        } catch (ValidacionException | PersistenciaException e) {
+            throw new NegocioException("No se pudo modificar el huesped.", e);
+        }
+    }
+
     public List<HuespedDTO> buscarHuspedes(String nombre, String apellido, String nroDocumento,String tipoDoc) throws NegocioException, ValidacionException {
         
-        //Normalizar valores nulos o vacios
-        String nombreFiltro = (nombre == null) ? "" : nombre.trim();
-        String apellidoFiltro = (apellido == null) ? "" : apellido.trim();
-        String nroDocumentoFiltro = (nroDocumento == null) ? "" : nroDocumento.trim();
-        String tipoDocFiltro = (tipoDoc == null) ? "" : tipoDoc.trim();
-
         Predicate<Huesped> filtro = h -> 
-            (nombreFiltro.isEmpty() || h.getNombre().toLowerCase().contains(nombreFiltro.toLowerCase())) &&
-            (apellidoFiltro.isEmpty() || h.getApellido().toLowerCase().contains(apellidoFiltro.toLowerCase())) &&
-            (nroDocumentoFiltro.isEmpty() || h.getNroDocumento().equalsIgnoreCase(nroDocumentoFiltro)) &&
-            (tipoDocFiltro.isEmpty() || h.getTipoDocumento().toString().equalsIgnoreCase(tipoDocFiltro));
+            (nombre.isEmpty() || h.getNombre().toLowerCase().contains(nombre.toLowerCase())) &&
+            (apellido.isEmpty() || h.getApellido().toLowerCase().contains(apellido.toLowerCase())) &&
+            (tipoDoc.isEmpty() || h.getTipoDocumento().getTipo().name().contains(tipoDoc)) &&
+            (nroDocumento.isEmpty() || h.getNroDocumento().contains(tipoDoc));
         try {
             List<Huesped> huespedes = huespedDAO.findBy(filtro);
             return huespedes.stream()
@@ -93,7 +134,10 @@ public class HuespedService {
         if (huespedDTO.getDireccion() == null) {
             throw new ValidacionException("La direccion del huesped es inválida.");
         }
+    }
 
+    private void existeHuesped(HuespedDTO huespedDTO) throws PersistenciaException, ValidacionException{
+        
         List<Huesped> huespedesExistentes = huespedDAO.findBy(h -> 
             h.getNroDocumento().equalsIgnoreCase(huespedDTO.getNroDocumento()) && 
             h.getTipoDocumento().getTipo().toString().equalsIgnoreCase(huespedDTO.getTipoDocumento())

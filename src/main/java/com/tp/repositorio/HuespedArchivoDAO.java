@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 public class HuespedArchivoDAO implements IHuespedDAO{
 
     private static HuespedArchivoDAO instancia;
-    private HuespedService huespedService = HuespedService.getInstancia();
-    private DireccionService direccionService = DireccionService.getInstancia();
     private final Path RUTA_ARCHIVO = Paths.get("data/huespedes.csv");
     private final String SEPARADOR = ",";
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -57,6 +55,8 @@ public class HuespedArchivoDAO implements IHuespedDAO{
 
     // Convierte una línea de texto a un objeto Huesped (usando Builders)
     private Huesped mapToHuesped(String linea) throws  Exception{
+        DireccionService direccionService = DireccionService.getInstancia();
+        HuespedService huespedService = HuespedService.getInstancia();
         String[] datos = linea.split(SEPARADOR, -1);
 
         try {

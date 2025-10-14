@@ -71,7 +71,14 @@ public class ConserjeArchivoDAO implements IConserjeDAO {
     
 
     @Override
-    public void delete(List<Conserje> conserjes) throws PersistenciaException {
+    public void delete(Conserje conserje) throws PersistenciaException {
+        List<Conserje> conserjes = findAll();
+        boolean eliminado = conserjes.removeIf(c -> c.getUsuario().equals(conserje.getUsuario()));
+
+        if (!eliminado){
+            throw new EntidadNoEncontradaException("No se encontró un conserje para eliminar con el usuario: " + conserje.getUsuario());
+        }
+        
         escribirArchivo(conserjes);
     }
 

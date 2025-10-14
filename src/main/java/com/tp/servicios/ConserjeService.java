@@ -88,16 +88,15 @@ public class ConserjeService {
         if (conserjeDTO == null || conserjeDTO.getUsuario() == null || conserjeDTO.getUsuario().isBlank()) {
             throw new ValidacionException("El conserje a eliminar no puede ser nulo o tener un usuario vacío.");
         }
-
         List<Conserje> conserjes = conserjeDAO.findAll();
-        boolean eliminado = conserjes.removeIf(c -> c.getUsuario().equals(conserjeDTO.getUsuario()));
+        boolean existeUsuario = conserjes.stream().anyMatch(c -> c.getUsuario().equals(conserjeDTO.getUsuario()));
 
-        if (!eliminado) {
+        if (!existeUsuario) {
             throw new EntidadNoEncontradaException("No se encontró un conserje para eliminar con el usuario: " + conserjeDTO.getUsuario());
         }
 
         try {
-            conserjeDAO.delete(conserjes);
+            conserjeDAO.delete(mapDTOToConserje(conserjeDTO));
         } catch (PersistenciaException e) { // EntidadNoEncontradaException es una PersistenciaException
             throw new NegocioException("No se pudo eliminar el conserje.", e);
         }

@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import com.tp.dto.DireccionDTO;
 import com.tp.dto.HuespedDTO;
 import com.tp.excepciones.*;
+import com.tp.modelo.Ciudad;
+import com.tp.modelo.Direccion;
 import com.tp.modelo.Huesped;
 import com.tp.modelo.TipoDocumento;
 import com.tp.persistencia.IHuespedDAO;
@@ -18,10 +20,11 @@ public class HuespedService {
     private IHuespedDAO huespedDAO;
     private ITipoDocumento tipoDocumentoDAO;
     private DireccionService direccionService = DireccionService.getInstancia();
+    private GeoService geoService = GeoService.getInstancia();
 
     private HuespedService() {
         this.huespedDAO = DAOFactory.getHuespedDAO();
-        this.tipoDocumentoDAO = DAOFactory.gTipoDocumentoDAO();
+        this.tipoDocumentoDAO = DAOFactory.getTipoDocumentoDAO();
     }
     
     public static HuespedService getInstancia() {
@@ -32,25 +35,34 @@ public class HuespedService {
     }
 
     public void registrarHuesped(HuespedDTO huespedDTO) throws NegocioException, PersistenciaException{
-            Huesped huesped;
+        DireccionDTO direccionDTO=null;
+
         try {
             validarHuesped(huespedDTO);
             existeHuesped(huespedDTO);
-            Huesped h = mapDTOToHuesped(huespedDTO);
-            DireccionDTO direccion = direccionService.registrarDireccion(huespedDTO.getDireccion());
-            h.getDireccion().setId(direccion.getId());
-            huesped = h;
-        } catch (ValidacionException | PersistenciaException e) {
-            throw new NegocioException("No se pudo registrar la direccion o huesped invalido", e);
-        }
-        try {
+
+            Huesped huesped = mapDTOToHuesped(huespedDTO);
+
+            direccionDTO = direccionService.registrarDireccion(huespedDTO.getDireccion());
+            huesped.setDireccion(mapDTOToDireccion(direccionDTO));
+
             huespedDAO.create(huesped);
-        } catch (PersistenciaException e) {
-            direccionService.eliminarDireccion(huespedDTO.getDireccion());
-            throw new NegocioException("No se pudo registrar el huesped.", e);
-        }
-        
+
+        } catch (ValidacionException | PersistenciaException e) {
+
+        // Si ya se creó la dirección, pero falla el huésped, se hace rollback.
+        // Es decir, se elimina la direccion para que no quede guardada sin tener un huesped asociado
+            if (direccionDTO != null && direccionDTO.getId() != null) {
+                try {
+                    direccionService.eliminarDireccion(direccionDTO);
+                } catch (Exception rollbackError) {
+                    System.err.println("Error al revertir la dirección: " + rollbackError.getMessage());
+                }
+            }
+            throw new NegocioException("Error al registrar huésped o dirección.", e);
+            } 
     }
+
 
     public void eliminarHuesped(HuespedDTO huespedDTO) throws NegocioException, ValidacionException, PersistenciaException {
         if(huespedDTO == null || huespedDTO.getNroDocumento().isBlank() || huespedDTO.getTipoDocumento().isBlank()) {
@@ -201,6 +213,23 @@ public class HuespedService {
             return tipoDoc;
         } catch (PersistenciaException e) {
             throw new NegocioException("Error al buscar el tipo de documento: " + tipo, e);
+        }
+    }
+
+    private Direccion mapDTOToDireccion(DireccionDTO direccionDTO) throws NegocioException, PersistenciaException {
+        try{
+            Ciudad ciudad = geoService.obtenerCiudad(direccionDTO.getCiudad(), direccionDTO.getProvincia(), direccionDTO.getPais());
+            return new Direccion.Builder()
+                .id(direccionDTO.getId())
+                .calle(direccionDTO.getCalle())
+                .nroCalle(direccionDTO.getNroCalle())
+                .nroDepartamento(direccionDTO.getNroDepartamento())
+                .nroPiso(direccionDTO.getNroPiso())
+                .codigoPostal(direccionDTO.getCodigoPostal())
+                .ciudad(ciudad)
+                .build();
+        } catch (PersistenciaException e) {
+            throw new PersistenciaException("Error al intentar mapear el DTO a Dirección", e);
         }
     }
 }

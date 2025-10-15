@@ -4,9 +4,10 @@ package com.tp.repositorio;
 import com.tp.modelo.Direccion;
 import com.tp.modelo.Huesped;
 import com.tp.modelo.TipoDocumento;
+import com.tp.persistencia.IDireccionDAO;
 import com.tp.persistencia.IHuespedDAO;
-import com.tp.servicios.DireccionService;
-import com.tp.servicios.HuespedService;
+import com.tp.persistencia.ITipoDocumento;
+import com.tp.utils.DAOFactory;
 import com.tp.excepciones.*;
 
 import java.io.BufferedWriter;
@@ -28,8 +29,13 @@ public class HuespedArchivoDAO implements IHuespedDAO{
     private final Path RUTA_ARCHIVO = Paths.get("data/huespedes.csv");
     private final String SEPARADOR = ",";
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private IDireccionDAO direccionDAO;
+    private ITipoDocumento tipoDocumentoDAO;
 
-    private HuespedArchivoDAO() { }
+    private HuespedArchivoDAO() {
+        this.direccionDAO = DAOFactory.getDireccionDAO();
+        this.tipoDocumentoDAO = DAOFactory.getTipoDocumentoDAO();
+     }
 
     // Singleton
     public static HuespedArchivoDAO getInstancia() {
@@ -55,17 +61,22 @@ public class HuespedArchivoDAO implements IHuespedDAO{
 
     // Convierte una línea de texto a un objeto Huesped (usando Builders)
     private Huesped mapToHuesped(String linea) throws  Exception{
-        DireccionService direccionService = DireccionService.getInstancia();
-        HuespedService huespedService = HuespedService.getInstancia();
         String[] datos = linea.split(SEPARADOR, -1);
 
         try {
             LocalDate fechaNac = !datos[5].isEmpty() ? LocalDate.parse(datos[5], DATE_FORMATTER) : null;
 
 
-            Direccion direccion = direccionService.obtenerDireccion(datos[9]);
+            Direccion direccion = direccionDAO.findBy(d -> d.getId().equals(datos[9]))
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new EntidadNoEncontradaException("No existe una dirección con el id: " + datos[9]));
             
-            TipoDocumento tipoDoc = huespedService.buscarTipoDocumento(datos[3]);
+            TipoDocumento tipoDoc = tipoDocumentoDAO
+                            .findBy(t -> t.getTipo().toString().equalsIgnoreCase(datos[3]))
+                            .stream()
+                            .findFirst()
+                            .orElseThrow(() -> new EntidadNoEncontradaException("No se encontró un tipo de documento con el nombre: " + datos[3]));
 
             return new Huesped.Builder()
                 .nombre(datos[0]).apellido(datos[1]).cuit(datos[2])
@@ -74,7 +85,7 @@ public class HuespedArchivoDAO implements IHuespedDAO{
                 .email(datos[6]).telefono(datos[7]).ocupacion(datos[8])
                 .direccion(direccion)
                 .build();
-        } catch (DateTimeParseException | ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+        } catch (EntidadNoEncontradaException | DateTimeParseException | ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new PersistenciaException("Error al parsear la línea del archivo de huéspedes: " + linea, e);
         }
     }

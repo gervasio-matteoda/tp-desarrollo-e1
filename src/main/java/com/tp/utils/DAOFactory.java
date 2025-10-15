@@ -30,7 +30,7 @@ public class DAOFactory {
         return CiudadArchivoDAO.getInstancia();
     }
 
-    public static ITipoDocumento gTipoDocumentoDAO(){
+    public static ITipoDocumento getTipoDocumentoDAO(){
         return TipoDocumentoArchivoDAO.getInstancia();
     }
 }

@@ -1,6 +1,5 @@
 package com.tp.repositorio;
 
-
 import com.tp.modelo.Direccion;
 import com.tp.modelo.Huesped;
 import com.tp.modelo.TipoDocumento;

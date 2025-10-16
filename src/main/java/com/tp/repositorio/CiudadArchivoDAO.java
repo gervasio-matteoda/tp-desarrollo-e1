@@ -23,7 +23,7 @@ public class CiudadArchivoDAO implements ICiudadDAO {
 
     private CiudadArchivoDAO() { }
 
-    //Singleton
+    // Singleton
     public static CiudadArchivoDAO getInstancia() {
         if (instancia == null) {
             instancia = new CiudadArchivoDAO();
@@ -31,7 +31,7 @@ public class CiudadArchivoDAO implements ICiudadDAO {
         return instancia;
     }
 
-    //Convierte una linea de texto a un objeto Ciudad
+    // Convierte una linea de texto a un objeto Ciudad
     private Ciudad mapToCiudad(String linea) throws PersistenciaException, ValidacionException {
         GeoService geoService = GeoService.getInstancia();
         String[] datos = linea.split(SEPARADOR);

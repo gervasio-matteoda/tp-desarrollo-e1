@@ -23,7 +23,7 @@ public class ProvinciaArchivoDAO implements IProvinciaDAO{
 
     private ProvinciaArchivoDAO() { }
 
-    //Singleton
+    // Singleton
     public static ProvinciaArchivoDAO getInstancia() {
         if (instancia == null) {
             instancia = new ProvinciaArchivoDAO();
@@ -31,7 +31,7 @@ public class ProvinciaArchivoDAO implements IProvinciaDAO{
         return instancia;
     }
 
-    //Convierte una linea de texto a un objeto Provincia
+    // Convierte una linea de texto a un objeto Provincia
     private Provincia mapToProvincia(String linea) throws PersistenciaException, ValidacionException {
         GeoService geoService = GeoService.getInstancia();
         String[] datos = linea.split(SEPARADOR);

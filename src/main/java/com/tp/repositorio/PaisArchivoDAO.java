@@ -21,6 +21,7 @@ public class PaisArchivoDAO implements IPaisDAO {
 
     private PaisArchivoDAO() {}
 
+    // Singleton
     public static PaisArchivoDAO getInstancia() {
         if (instancia == null) {
             instancia = new PaisArchivoDAO();
@@ -28,7 +29,7 @@ public class PaisArchivoDAO implements IPaisDAO {
         return instancia;
     }
 
-    //Convierte una linea de texto a un objeto Pais
+    // Convierte una linea de texto a un objeto Pais
     private Pais mapToPais(String linea) throws PersistenciaException {
         String[] datos = linea.split(SEPARADOR);
         try {
@@ -40,7 +41,6 @@ public class PaisArchivoDAO implements IPaisDAO {
             throw new PersistenciaException("Error al parsear la línea del archivo de paises: " + linea, e);
         }
     }
-
     
     @Override
     public List<Pais> findBy(Predicate<Pais> filtro) throws PersistenciaException {

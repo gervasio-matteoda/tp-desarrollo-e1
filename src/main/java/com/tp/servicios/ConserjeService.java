@@ -26,20 +26,18 @@ public class ConserjeService {
         return instancia;
     }
 
-    public void registrarConserje(ConserjeDTO conserjeDTO) throws NegocioException {
+    public void registrarConserje(ConserjeDTO conserjeDTO) throws ValidacionException, EntidadDuplicadaException, NegocioException {
         try {
             validarConserje(conserjeDTO);
             Conserje conserje = mapDTOToConserje(conserjeDTO);
             conserjeDAO.create(conserje);
-        } catch (ValidacionException | PersistenciaException e) {
-            throw new NegocioException("No se pudo registrar el conserje.", e);
+        } catch (PersistenciaException e) {
+            throw new NegocioException("Error de persistencia al registrar el conserje.", e);
         }
     }
 
     public ConserjeDTO autenticarConserje(String usuario, String contrasenia) throws AutenticacionException, NegocioException, ValidacionException{
-        if (usuario == null || usuario.isBlank() || contrasenia == null || contrasenia.isBlank()) {
-                throw new ValidacionException("El usuario y la contraseña no pueden estar vacíos.");
-            }
+        if (usuario == null || usuario.isBlank() || contrasenia == null || contrasenia.isBlank()) { throw new ValidacionException("El usuario y la contraseña no pueden estar vacíos.");}
 
         try {
             Conserje conserje = conserjeDAO.findBy(c -> c.getUsuario().equals(usuario))
@@ -50,16 +48,15 @@ public class ConserjeService {
             ConserjeDTO conserjeDTO = mapConserjeToDTO(conserje);
 
             if (!conserjeDTO.getContrasenia().equals(contrasenia)) {
-                throw new AutenticacionException("Contraseña incorrecta para el usuario: " + usuario);
+                throw new AutenticacionException("La contraseña es incorrecta.");
             }
             return conserjeDTO; // Autenticación exitosa
         } catch (PersistenciaException e) {
-            throw new NegocioException("Error al intentar autenticar al conserje.", e);
+            throw new NegocioException("Error de persistencia al registrar el conserje.", e);
         }
     }
 
     public Optional<Conserje> buscarConserje(ConserjeDTO conserjeDTO) throws NegocioException, ValidacionException {
-        
         if (conserjeDTO == null || conserjeDTO.getUsuario() == null || conserjeDTO.getUsuario().isBlank()) {
             throw new ValidacionException("El conserje o su nombre de usuario no pueden estar vacíos para la búsqueda.");
         }
@@ -97,30 +94,31 @@ public class ConserjeService {
 
         try {
             conserjeDAO.delete(mapDTOToConserje(conserjeDTO));
-        } catch (PersistenciaException e) { // EntidadNoEncontradaException es una PersistenciaException
-            throw new NegocioException("No se pudo eliminar el conserje.", e);
+        } catch (PersistenciaException e) {
+            throw new NegocioException("Error de persistencia al registrar el conserje.", e);
         }
     }
 
     private void validarConserje(ConserjeDTO conserjeDTO) throws ValidacionException, EntidadDuplicadaException, PersistenciaException {
 
-        if (conserjeDTO.getNombre() == null || conserjeDTO.getNombre().isBlank() || conserjeDTO.getNombre().length() > 64) {
-            throw new ValidacionException("El nombre del conserje es inválido. El campo se encuentra vacío o excede 64 caracteres.");
+        if (conserjeDTO.getNombre() == null || conserjeDTO.getNombre().isBlank() || conserjeDTO.getNombre().length() < 4 || conserjeDTO.getNombre().length() > 64) {
+            throw new ValidacionException("El nombre del conserje es inválido. El campo debe tener entre 4 y 64 caracteres.");
         }
-        if (conserjeDTO.getApellido() == null || conserjeDTO.getApellido().isBlank() || conserjeDTO.getApellido().length() > 64) {
-            throw new ValidacionException("El apellido del conserje es inválido. El campo se encuentra vacío o excede 64 caracteres.");
+        if (conserjeDTO.getApellido() == null || conserjeDTO.getApellido().isBlank() || conserjeDTO.getApellido().length() < 4 || conserjeDTO.getApellido().length() > 64) {
+            throw new ValidacionException("El apellido del conserje es inválido. El campo debe tener entre 4 y 64 caracteres.");
         }
 
         if (conserjeDTO.getUsuario() == null || conserjeDTO.getUsuario().length() < 4 || conserjeDTO.getUsuario().length() > 32) {
-            throw new ValidacionException("El usuario debe tener entre 4 y 32 caracteres.");
+            throw new ValidacionException("El usuario es inválido. El campo debe tener entre 4 y 32 caracteres.");
         }
+
         // Caracteres Permitidos: Letras, números, guion bajo, guion medio
         if (!conserjeDTO.getUsuario().matches("^[a-zA-Z0-9_-]+$")) {
             throw new ValidacionException("El usuario solo puede contener letras, números, '_' y '-'.");
         }
 
-        if (conserjeDTO.getContrasenia() == null || conserjeDTO.getContrasenia().isBlank() || conserjeDTO.getContrasenia().length() > 32) {
-            throw new ValidacionException("La contraseña es inválida. El campo se encuentra vacío o excede 32 caracteres.");
+        if (conserjeDTO.getContrasenia() == null || conserjeDTO.getContrasenia().isBlank() || conserjeDTO.getContrasenia().length() < 4 || conserjeDTO.getContrasenia().length() > 32) {
+            throw new ValidacionException("La contraseña es inválida. El campo debe tener entre 4 y 32 caracteres.");
         }
 
         // Contadores y lista para extraer dígitos

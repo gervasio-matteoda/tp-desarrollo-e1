@@ -61,14 +61,12 @@ public class ConserjeArchivoDAO implements IConserjeDAO {
         }
     }
 
-
     @Override
     public void create(Conserje conserje) throws PersistenciaException{
         List<Conserje> conserjes = findAll();
         conserjes.add(conserje);
         escribirArchivo(conserjes);
     }
-    
 
     @Override
     public void delete(Conserje conserje) throws PersistenciaException {

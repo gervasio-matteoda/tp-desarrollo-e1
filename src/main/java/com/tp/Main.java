@@ -1,7 +1,9 @@
 package com.tp;
 
+import com.tp.dto.ConserjeDTO;
 import com.tp.excepciones.PersistenciaException;
-
+import com.tp.presentacion.ConserjeMenu;
+import com.tp.presentacion.HuespedMenu;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,8 +18,21 @@ public class Main {
         } catch (PersistenciaException e) {
             System.err.println("Error fatal al inicializar el directorio de datos: " + e.getMessage());
             e.printStackTrace();
-            return;
-        }   
+            return; // Termina la aplicación si el directorio no se puede inicializar
+        } 
+        
+        // Login/Autenticación
+        ConserjeMenu login = new ConserjeMenu();
+        ConserjeDTO conserje = login.iniciarMenu();
+
+        // ¿Éxito? Continua con el menú principal del sistema
+        System.out.println("\nSesión iniciada para el conserje: " + conserje.getUsuario());
+
+        // Continua con HuespedMenu
+        // HuespedMenu menuPrincipal = new HuespedMenu(conserje);
+        // menuPrincipal.iniciarMenu();
+
+        System.out.println("\n👋 Fin de la sesión. ¡Hasta pronto!");
     }
 
     private static void initializeDataDirectory() throws PersistenciaException {

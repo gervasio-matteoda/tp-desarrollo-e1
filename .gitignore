@@ -19,7 +19,7 @@ mvnw
 mvnw.cmd
 
 # Datos de la Aplicación
-data/
+# data/
 
 # Configuraciones de IDEs
 .vscode/

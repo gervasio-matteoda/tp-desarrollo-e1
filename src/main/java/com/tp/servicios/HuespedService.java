@@ -50,8 +50,8 @@ public class HuespedService {
 
         } catch (ValidacionException | PersistenciaException e) {
 
-        // Si ya se creó la dirección, pero falla el huésped, se hace rollback.
-        // Es decir, se elimina la direccion para que no quede guardada sin tener un huesped asociado
+            // Si ya se creó la dirección, pero falla el huésped, se hace rollback.
+            // Es decir, se elimina la direccion para que no quede guardada sin tener un huesped asociado
             if (direccionDTO != null && direccionDTO.getId() != null) {
                 try {
                     direccionService.eliminarDireccion(direccionDTO);

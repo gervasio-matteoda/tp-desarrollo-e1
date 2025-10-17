@@ -75,7 +75,7 @@ public class HuespedMenu {
     }
 
     private void gestionarHuespedExistente() {
-        HuespedDTO huesped = buscarUnHuesped();
+        HuespedDTO huesped = buscarYSeleccionarHuesped();
 
         if (huesped != null) {
             limpiarConsola();
@@ -114,21 +114,52 @@ public class HuespedMenu {
         }
     }
 
-    private HuespedDTO buscarUnHuesped() {
-        System.out.println("--- BÚSQUEDA DE HUÉSPED ---");
+    private HuespedDTO buscarYSeleccionarHuesped() {
+        System.out.println("\n--- BÚSQUEDA DE HUÉSPED ---");
         String tipoDoc = pedirTipoDocumento();
         if (esCancelacion(tipoDoc)) return null;
 
-        String nroDoc = pedirCampo("Número de Documento a buscar: ");
+        // Se aclara que el campo es opcional.
+        String nroDoc = pedirCampo("\nNúmero de Documento (Presione ENTER para buscar por tipo): ");
         if (esCancelacion(nroDoc)) return null;
 
         try {
             List<HuespedDTO> resultados = huespedService.buscarHuspedes("", "", nroDoc, tipoDoc);
+            
             if (resultados.isEmpty()) {
-                mostrarError("No se encontró ningún huésped con ese documento.");
+                mostrarError("No se encontraron huéspedes con los criterios ingresados.");
                 return null;
             }
-            return resultados.get(0);
+            
+            if (resultados.size() == 1) {
+                return resultados.get(0);
+            }
+
+            // Si hay múltiples resultados, se muestran para que el usuario elija.
+            System.out.println("\n--- SE ENCONTRARON MÚLTIPLES HUÉSPEDES ---");
+            for (int i = 0; i < resultados.size(); i++) {
+                HuespedDTO h = resultados.get(i);
+                System.out.printf("%d. %s, %s (%s: %s)\n", (i + 1), h.getApellido(), h.getNombre(), h.getTipoDocumento(), h.getNroDocumento());
+            }
+            System.out.println("0. Cancelar");
+
+            while(true) {
+                try {
+                    String input = pedirCampo("\nSeleccione el número del huésped: ");
+                    if (input.isBlank()) continue;
+                    int seleccion = Integer.parseInt(input);
+
+                    if (seleccion == 0) return null; // Cancelar
+                    if (seleccion > 0 && seleccion <= resultados.size()) {
+                        return resultados.get(seleccion - 1); // Retorna el huésped seleccionado
+                    } else {
+                        mostrarError("Número fuera de rango. Intente de nuevo.");
+                    }
+                } catch (NumberFormatException e) {
+                    mostrarError("Entrada inválida. Ingrese solo el número.");
+                }
+            }
+
         } catch (NegocioException e) {
             mostrarError("Error al buscar huésped: " + e.getMessage());
             return null;
@@ -136,7 +167,7 @@ public class HuespedMenu {
     }
 
     private void mostrarDatosHuesped(HuespedDTO huesped) {
-        System.out.println("--- DATOS DEL HUÉSPED ENCONTRADO ---");
+        System.out.println("\n--- DATOS DEL HUÉSPED ENCONTRADO ---");
         System.out.println("Nombre Completo: " + huesped.getNombre() + " " + huesped.getApellido());
         System.out.println("Documento:       " + huesped.getTipoDocumento() + " " + huesped.getNroDocumento());
         System.out.println("Teléfono:        " + huesped.getTelefono());
@@ -168,7 +199,8 @@ public class HuespedMenu {
     private void registrarHuesped() {
         boolean cargarOtro = true;
         while (cargarOtro) {
-            limpiarConsola(); // <-- MEJORA 1: Limpia la pantalla al iniciar un nuevo registro.
+            limpiarConsola();
+            limpiarCampos(); 
             System.out.println("--- REGISTRO DE NUEVO HUÉSPED ---");
             System.out.println("(*) Campo obligatorio. Escriba 'CANCELAR' en cualquier momento para salir.");
 
@@ -179,18 +211,17 @@ public class HuespedMenu {
             boolean datosCompletos = false;
 
             while (!datosCompletos) {
-                // ... (toda la lógica de pedir datos sin cambios)
-                if (esNulo(huespedBuilder.build().getApellido())) huespedBuilder.apellido(pedirCampo("(*) Apellido: "));
-                if (esCancelacion(huespedBuilder.build().getApellido())) return;
                 if (esNulo(huespedBuilder.build().getNombre())) huespedBuilder.nombre(pedirCampo("(*) Nombres: "));
                 if (esCancelacion(huespedBuilder.build().getNombre())) return;
+                if (esNulo(huespedBuilder.build().getApellido())) huespedBuilder.apellido(pedirCampo("(*) Apellido: "));
+                if (esCancelacion(huespedBuilder.build().getApellido())) return;
                 if (esNulo(huespedBuilder.build().getTipoDocumento())) huespedBuilder.tipoDocumento(pedirTipoDocumento());
                 if (esCancelacion(huespedBuilder.build().getTipoDocumento())) return;
                 if (esNulo(huespedBuilder.build().getNroDocumento())) {
                     String nroDoc = pedirYVerificarDocumento(huespedBuilder.build().getTipoDocumento());
                     if (esCancelacion(nroDoc)) return;
                     huespedBuilder.nroDocumento(nroDoc);
-                }
+                } // Verificar que el nro de documento, sea número.
                 if (huespedBuilder.build().getFechaDeNacimiento() == null) {
                     LocalDate fecha = pedirFecha("(*) Fecha de Nacimiento (DD/MM/YYYY): "); // Mensaje actualizado
                     if (fecha == null && !confirmarCancelacion()) continue;

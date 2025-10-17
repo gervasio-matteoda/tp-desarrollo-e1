@@ -36,11 +36,13 @@ public class DireccionArchivoDAO implements IDireccionDAO {
     }
 
     // Convierte una línea de texto a un objeto Direccion
-    private Direccion mapToDireccion(String linea) throws PersistenciaException, ValidacionException {
-        GeoService geoService = GeoService.getInstancia();
+    private Direccion mapToDireccion(String linea) throws PersistenciaException {
         String[] datos = linea.split(SEPARADOR);
         try {
-            Ciudad ciudad = geoService.obtenerCiudad(Integer.parseInt(datos[6]));
+            Ciudad ciudadParcial = new Ciudad.Builder()
+                .id(Integer.parseInt(datos[6]))
+                .build();
+
             return new Direccion.Builder()
                 .id(datos[0])
                 .calle(datos[1])
@@ -48,13 +50,12 @@ public class DireccionArchivoDAO implements IDireccionDAO {
                 .nroDepartamento(Integer.parseInt(datos[3]))
                 .nroPiso(Integer.parseInt(datos[4]))
                 .codigoPostal(Integer.parseInt(datos[5]))
-                .ciudad(ciudad)
+                .ciudad(ciudadParcial)
                 .build();
 
-        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+        } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
             throw new PersistenciaException("Error al parsear la línea del archivo de direcciones: " + linea, e);
         }
-        
     }
 
     // Convierte un objeto Direccion a una línea de texto para el archivo
@@ -146,8 +147,6 @@ public class DireccionArchivoDAO implements IDireccionDAO {
                         try {
                             return mapToDireccion(line);
                         } catch (PersistenciaException e) {
-                            throw new RuntimeException(e);
-                        } catch (ValidacionException e) {
                             throw new RuntimeException(e);
                         }
                     })

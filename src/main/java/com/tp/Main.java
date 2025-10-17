@@ -8,9 +8,11 @@ import com.tp.presentacion.HuespedMenu;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Scanner;
 
 public class Main {
 
+    private static final Scanner scanner = new Scanner(System.in);
     public static void main(String[] args){
         
         try {
@@ -22,17 +24,24 @@ public class Main {
         } 
         
         // Login/Autenticación
-        ConserjeMenu login = new ConserjeMenu();
-        ConserjeDTO conserje = login.iniciarMenu();
+        while (true) {
+            ConserjeMenu login = new ConserjeMenu();
+            ConserjeDTO conserje = login.iniciarMenu();
 
-        // ¿Éxito? Continua con el menú principal del sistema
-        System.out.println("\nSesión iniciada para el conserje: " + conserje.getUsuario());
+            System.out.println("\n------------------------------------------");
+            System.out.println("Presione ENTER para continuar...");
+            scanner.nextLine(); 
+            limpiarConsola();
 
-        // Continua con HuespedMenu
-        // HuespedMenu menuPrincipal = new HuespedMenu(conserje);
-        // menuPrincipal.iniciarMenu();
+            if (conserje != null) {
+                HuespedMenu menuPrincipal = new HuespedMenu(conserje);
+                menuPrincipal.iniciarMenu();
+            } else { break; }
+        }
 
-        System.out.println("\n👋 Fin de la sesión. ¡Hasta pronto!");
+        scanner.close();
+        limpiarConsola();
+        System.out.println("\nFin de la sesión. ¡Hasta pronto!");
     }
 
     private static void initializeDataDirectory() throws PersistenciaException {
@@ -40,6 +49,19 @@ public class Main {
             Files.createDirectories(Paths.get("data"));
         } catch (IOException e) {
             throw new PersistenciaException("Error al crear el directorio de datos para la aplicación.", e);
+        }
+    }
+
+    private static void limpiarConsola() {
+        try {
+            if (System.getProperty("os.name").contains("Windows")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            for (int i = 0; i < 50; i++) System.out.println();
         }
     }
 }

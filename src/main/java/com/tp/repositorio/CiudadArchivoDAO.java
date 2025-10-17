@@ -32,15 +32,16 @@ public class CiudadArchivoDAO implements ICiudadDAO {
     }
 
     // Convierte una linea de texto a un objeto Ciudad
-    private Ciudad mapToCiudad(String linea) throws PersistenciaException, ValidacionException {
-        GeoService geoService = GeoService.getInstancia();
+    private Ciudad mapToCiudad(String linea) throws PersistenciaException { // Prueba momentanea
         String[] datos = linea.split(SEPARADOR);
         try {
-            Provincia provincia = geoService.obtenerProvincia(Integer.parseInt(datos[2])); 
+            // No llamar a GeoService. Construir un objeto Provincia solo con el ID.
+            Provincia provinciaParcial = new Provincia.Builder().id(Integer.parseInt(datos[2])).build();
+
             return new Ciudad.Builder()
                 .id(Integer.parseInt(datos[0]))
                 .nombre(datos[1])
-                .provincia(provincia)
+                .provincia(provinciaParcial) // Usar el objeto parcial
                 .build();
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new PersistenciaException("Error al parsear la línea del archivo de ciudades: " + linea, e);
@@ -72,8 +73,6 @@ public class CiudadArchivoDAO implements ICiudadDAO {
                     try {
                         return mapToCiudad(line);
                     } catch (PersistenciaException e) {
-                        throw new RuntimeException(e);
-                    } catch (ValidacionException e) {
                         throw new RuntimeException(e);
                     }
                 })

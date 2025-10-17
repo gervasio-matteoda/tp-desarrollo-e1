@@ -3,7 +3,7 @@ package com.tp.servicios;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
+import java.util.ArrayList;
 import com.tp.dto.DireccionDTO;
 import com.tp.dto.HuespedDTO;
 import com.tp.excepciones.*;
@@ -21,6 +21,7 @@ public class HuespedService {
     private ITipoDocumento tipoDocumentoDAO;
     private DireccionService direccionService = DireccionService.getInstancia();
     private GeoService geoService = GeoService.getInstancia();
+    private OcupacionService ocupacionService = OcupacionService.getInstancia();
 
     private HuespedService() {
         this.huespedDAO = DAOFactory.getHuespedDAO();
@@ -65,24 +66,31 @@ public class HuespedService {
 
 
     public void eliminarHuesped(HuespedDTO huespedDTO) throws NegocioException, ValidacionException, PersistenciaException {
-        if(huespedDTO == null || huespedDTO.getNroDocumento().isBlank() || huespedDTO.getTipoDocumento().isBlank()) {
-            throw new ValidacionException("El huesped a eliminar no puede ser nulo o tener el numero de documento o tipo de documento vacio");
+        if (huespedDTO == null || huespedDTO.getNroDocumento().isBlank() || huespedDTO.getTipoDocumento().isBlank()) {
+            throw new ValidacionException("Los datos del huésped a eliminar no pueden ser nulos.");
         }
+
+        // 1. VERIFICACIÓN DE HISTORIAL
+        if (ocupacionService.huespedTieneOcupaciones(huespedDTO)) {
+            throw new NegocioException("No se puede eliminar el huésped porque ya tiene un historial de alojamientos.");
+        }
+        
         try {
-            validarHuesped(huespedDTO);
+            // Buscamos el huésped para obtener el objeto de dominio completo
             Huesped huesped = huespedDAO.findBy(h -> 
                 h.getNroDocumento().equalsIgnoreCase(huespedDTO.getNroDocumento()) && 
                 h.getTipoDocumento().getTipo().toString().equalsIgnoreCase(huespedDTO.getTipoDocumento())
             )
             .stream()
             .findFirst()
-            .orElseThrow(() -> new EntidadNoEncontradaException("No existe un huesped con el tipo y numero de documento proporcionado."));
+            .orElseThrow(() -> new EntidadNoEncontradaException("No se encontró el huésped a eliminar."));
             
-            
+            // Eliminamos al huésped y su dirección asociada
             huespedDAO.delete(huesped);
-            direccionService.eliminarDireccion(huespedDTO.getDireccion());
+            direccionService.eliminarDireccion(mapHuespedToDTO(huesped).getDireccion());
+            
         } catch (EntidadNoEncontradaException e) {
-            throw new NegocioException("No se pudo eliminar el huesped. " + e.getMessage(), e);
+            throw new NegocioException("No se pudo eliminar el huésped. " + e.getMessage(), e);
         }
     }
 
@@ -100,22 +108,23 @@ public class HuespedService {
         }
     }
 
-    public List<HuespedDTO> buscarHuspedes(String nombre, String apellido, String nroDocumento,String tipoDoc) throws NegocioException, ValidacionException {
+    public List<HuespedDTO> buscarHuspedes(String nombre, String apellido, String nroDocumento, String tipoDoc) throws NegocioException {
         
         Predicate<Huesped> filtro = h -> 
             (nombre.isEmpty() || h.getNombre().toLowerCase().contains(nombre.toLowerCase())) &&
             (apellido.isEmpty() || h.getApellido().toLowerCase().contains(apellido.toLowerCase())) &&
             (tipoDoc.isEmpty() || h.getTipoDocumento().getTipo().name().contains(tipoDoc)) &&
-            (nroDocumento.isEmpty() || h.getNroDocumento().contains(tipoDoc));
+            (nroDocumento.isEmpty() || h.getNroDocumento().contains(nroDocumento)); // Pequeña corrección aquí también, usaba tipoDoc por error
         try {
             List<Huesped> huespedes = huespedDAO.findBy(filtro);
-            return huespedes.stream()
-                            .map(h -> mapHuespedToDTO(h))
-                            .collect(Collectors.toList());
+            List<HuespedDTO> resultadoDTOs = new ArrayList<>();
+            for (Huesped huesped : huespedes) {
+                resultadoDTOs.add(mapHuespedToDTO(huesped));
+            }
+            return resultadoDTOs;
         } catch (PersistenciaException e) {
             throw new NegocioException("Error al buscar huespedes.", e);
         }
-
     }
 
     private void validarHuesped(HuespedDTO huespedDTO) throws ValidacionException, PersistenciaException {
@@ -125,17 +134,20 @@ public class HuespedService {
         if (huespedDTO.getApellido() == null || huespedDTO.getApellido().isBlank() || huespedDTO.getApellido().length() > 64) {
             throw new ValidacionException("El apellido del huesped es inválido. El campo se encuentra vacío o excede 64 caracteres.");
         }
-        if (huespedDTO.getCuit() != null && (huespedDTO.getCuit().isBlank() || huespedDTO.getCuit().length() > 11)) {
-            throw new ValidacionException("El CUIT del huesped es inválido. El campo se encuentra vacío o excede 11 caracteres.");
-        }
+        if (huespedDTO.getCuit() != null && !huespedDTO.getCuit().isBlank() && huespedDTO.getCuit().length() > 11) {
+        throw new ValidacionException("El CUIT del huesped es inválido. Si se proporciona, no debe exceder los 11 caracteres.");
+    }
         if (huespedDTO.getTipoDocumento() == null) {
             throw new ValidacionException("El tipo de documento del huesped es inválido.");
         }
         if ( huespedDTO.getNroDocumento() == null || huespedDTO.getNroDocumento().isBlank() || huespedDTO.getNroDocumento().length() > 64) {
             throw new ValidacionException("El numero de documento del huesped es inválido. El campo se encuentra vacío o excede 64 caracteres.");
         }
-        if (huespedDTO.getEmail() != null && (huespedDTO.getEmail().isBlank() || huespedDTO.getEmail().length() > 128 || !huespedDTO.getEmail().contains("@"))) {
-            throw new ValidacionException("El email del huesped es inválido. El campo se encuentra vacío, excede 128 caracteres o no es una direccion de correo valida.");    
+        if (huespedDTO.getEmail() != null && !huespedDTO.getEmail().isBlank()) {
+            // Si se proporciona un email, se valida su formato.
+            if (huespedDTO.getEmail().length() > 128 || !huespedDTO.getEmail().contains("@")) {
+                throw new ValidacionException("El email del huésped es inválido. Si se proporciona, no debe exceder los 128 caracteres y debe ser una dirección de correo válida.");    
+            }
         }
         if (huespedDTO.getTelefono() == null || huespedDTO.getTelefono().isBlank() || huespedDTO.getTelefono().length() > 32) {
             throw new ValidacionException("El telefono del huesped es inválido. El campo se encuentra vacío o excede 32 caracteres.");
@@ -182,7 +194,10 @@ public class HuespedService {
         }
     }
 
-    private HuespedDTO mapHuespedToDTO(Huesped huesped) {
+    private HuespedDTO mapHuespedToDTO(Huesped huesped) throws NegocioException {
+        
+        DireccionDTO direccionDTO = direccionService.mapDireccionToDTO(huesped.getDireccion());
+
         return new HuespedDTO.Builder()
             .nombre(huesped.getNombre())
             .apellido(huesped.getApellido())
@@ -193,7 +208,7 @@ public class HuespedService {
             .email(huesped.getEmail())
             .telefono(huesped.getTelefono())
             .ocupacion(huesped.getOcupacion())
-            .direccion(direccionService.mapDireccionToDTO(huesped.getDireccion()))
+            .direccion(direccionDTO)
             .build();
     }
 
@@ -216,6 +231,16 @@ public class HuespedService {
         }
     }
 
+    public List<String> obtenerTiposDeDocumento() throws NegocioException {
+        try {
+            return tipoDocumentoDAO.findAll().stream()
+                .map(t -> t.getTipo().name())
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new NegocioException("Error al obtener los tipos de documento.", e);
+        }
+    }
+
     private Direccion mapDTOToDireccion(DireccionDTO direccionDTO) throws NegocioException, PersistenciaException {
         try{
             Ciudad ciudad = geoService.obtenerCiudad(direccionDTO.getCiudad(), direccionDTO.getProvincia(), direccionDTO.getPais());
@@ -231,5 +256,16 @@ public class HuespedService {
         } catch (PersistenciaException e) {
             throw new PersistenciaException("Error al intentar mapear el DTO a Dirección", e);
         }
+    }
+
+    public boolean huespedYaExiste(String tipoDoc, String nroDoc) throws PersistenciaException {
+        if (tipoDoc == null || tipoDoc.isBlank() || nroDoc == null || nroDoc.isBlank()) {
+            return false; // No se puede buscar con datos inválidos.
+        }
+        List<Huesped> huespedesExistentes = huespedDAO.findBy(h ->
+            h.getNroDocumento().equalsIgnoreCase(nroDoc) &&
+            h.getTipoDocumento().getTipo().toString().equalsIgnoreCase(tipoDoc)
+        );
+        return !huespedesExistentes.isEmpty();
     }
 }

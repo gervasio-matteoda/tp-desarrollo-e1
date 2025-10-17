@@ -110,7 +110,22 @@ public class DireccionService {
         }
     }
 
-   public DireccionDTO mapDireccionToDTO(Direccion direccion) {
+   public DireccionDTO mapDireccionToDTO(Direccion direccion) throws NegocioException {
+        
+        if (direccion.getCalle() == null || direccion.getCalle().isBlank()) {
+             try {
+                direccion = obtenerDireccion(direccion.getId());
+            } catch (Exception e) {
+                throw new NegocioException("No se pudo cargar la información base de la dirección con ID: " + direccion.getId(), e);
+            }
+        }
+       
+        try {
+            geoService.completarDatosGeograficos(direccion.getCiudad());
+        } catch (PersistenciaException e) {
+            throw new NegocioException("Error de integridad de datos. No se pudieron cargar los datos geográficos para la dirección con ID " + direccion.getId(), e);
+        }
+
         return new DireccionDTO.Builder()
             .id(direccion.getId())
             .calle(direccion.getCalle())
@@ -123,5 +138,4 @@ public class DireccionService {
             .pais(direccion.getCiudad().getProvincia().getPais().getNombre())
             .build();
     }
-
 }

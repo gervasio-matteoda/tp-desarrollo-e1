@@ -32,15 +32,15 @@ public class ProvinciaArchivoDAO implements IProvinciaDAO{
     }
 
     // Convierte una linea de texto a un objeto Provincia
-    private Provincia mapToProvincia(String linea) throws PersistenciaException, ValidacionException {
-        GeoService geoService = GeoService.getInstancia();
+    private Provincia mapToProvincia(String linea) throws PersistenciaException { // Prueba momentanea
         String[] datos = linea.split(SEPARADOR);
         try {
-            Pais pais = geoService.obtenerPais(Integer.parseInt(datos[2]));
+            Pais paisParcial = new Pais.Builder().id(Integer.parseInt(datos[2])).build();
+            
             return new Provincia.Builder()
                 .id(Integer.parseInt(datos[0]))
                 .nombre(datos[1])
-                .pais(pais)
+                .pais(paisParcial)
                 .build();
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new PersistenciaException("Error al parsear la línea del archivo de provincias: " + linea, e);
@@ -72,8 +72,6 @@ public class ProvinciaArchivoDAO implements IProvinciaDAO{
                     try {
                         return mapToProvincia(line);
                     } catch (PersistenciaException e) {
-                        throw new RuntimeException(e);
-                    } catch (ValidacionException e) {
                         throw new RuntimeException(e);
                     }
                 })

@@ -18,20 +18,26 @@ public class ConserjeMenu {
     }
 
     public ConserjeDTO iniciarMenu() {
-                System.out.println("- - - - - SISTEMA DE GESTIÓN HOTELERA - - - - -");
+        System.out.println("- - - - - SISTEMA DE GESTIÓN HOTELERA - - - - -\n");
         int opcion = -1;
         ConserjeDTO conserjeAutenticado = null;
 
         while (conserjeAutenticado == null) {
             
-            System.out.println("\n--- Opciones de Acceso ---");
+            System.out.println("  MENÚ PRINCIPAL - GESTIÓN DE CONSERJES  ");
+            System.out.println("=========================================");
             System.out.println("1. Iniciar Sesión");
-            System.out.println("2. Crear Cuenta (Registro)");
-            System.out.println("0. Salir de la Aplicación");
-            System.out.println("--------------------------");
+            System.out.println("2. Registrar Nuevo Conserje");
+            System.out.println("------------------------------------");
+            System.out.println("0. Volver al Menú Principal/Salir");
+            System.out.print("\nSeleccione una opción: ");
             
             try {
-                opcion = Integer.parseInt(pedirCampo("Seleccione una opción: "));
+                String input = scanner.nextLine().trim();
+                if (input.isBlank()) continue; 
+                
+                opcion = Integer.parseInt(input);
+                limpiarConsola();
                 
                 switch (opcion) {
                     case 1:
@@ -61,7 +67,7 @@ public class ConserjeMenu {
     private ConserjeDTO autenticar() {
         System.out.println("\n--- INICIO DE SESIÓN ---");
         String usuario = pedirCampo("Usuario: ");
-        String contrasenia = pedirContraseniaOculta("Contraseña: ");
+        String contrasenia = pedirCampo("Contraseña: "); // Modificar a pedirContraseniaOculta
         
         try {
             ConserjeDTO conserje = conserjeService.autenticarConserje(usuario, contrasenia);
@@ -84,7 +90,7 @@ public class ConserjeMenu {
         String nombre = pedirCampo("Nombre (4-64 chars): ");
         String apellido = pedirCampo("Apellido (4-64 chars): ");
         String usuario = pedirCampo("Usuario (4-32 chars, solo letras, nums, _, -): ");
-        String contrasenia = pedirCampo("Contraseña (5 letras, 3 nums, no secuencias): ");
+        String contrasenia = pedirCampo("Contraseña (5 letras, 3 nums, no secuencias): "); // Modificar a pedirContraseniaOculta
 
         ConserjeDTO nuevoConserje = new ConserjeDTO.Builder()
             .nombre(nombre)
@@ -133,12 +139,12 @@ public class ConserjeMenu {
         System.out.println("Presione ENTER para continuar y reintentar...");
         scanner.nextLine(); 
 
-        ConserjeMenu.limpiarConsola(); 
+        limpiarConsola(); 
         
         System.out.println("Intente de nuevo o elija una opción diferente...");
     }
 
-    public static void limpiarConsola() {
+    private static void limpiarConsola() {
         try {
             if (System.getProperty("os.name").contains("Windows")) {
                 new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();

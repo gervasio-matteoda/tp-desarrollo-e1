@@ -29,11 +29,9 @@ public class HuespedArchivoDAO implements IHuespedDAO{
     private final String SEPARADOR = ",";
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private IDireccionDAO direccionDAO;
-    private ITipoDocumento tipoDocumentoDAO;
 
     private HuespedArchivoDAO() {
         this.direccionDAO = DAOFactory.getDireccionDAO();
-        this.tipoDocumentoDAO = DAOFactory.getTipoDocumentoDAO();
      }
 
     // Singleton
@@ -58,37 +56,32 @@ public class HuespedArchivoDAO implements IHuespedDAO{
         );
     }
 
-    // Convierte una línea de texto a un objeto Huesped (usando Builders)
-    private Huesped mapToHuesped(String linea) throws  Exception{
+    // Convierte una línea de texto a un objeto Huesped
+    private Huesped mapToHuesped(String linea) throws PersistenciaException {
         String[] datos = linea.split(SEPARADOR, -1);
 
         try {
             LocalDate fechaNac = !datos[5].isEmpty() ? LocalDate.parse(datos[5], DATE_FORMATTER) : null;
 
-
-            Direccion direccion = direccionDAO.findBy(d -> d.getId().equals(datos[9]))
-                    .stream()
-                    .findFirst()
-                    .orElseThrow(() -> new EntidadNoEncontradaException("No existe una dirección con el id: " + datos[9]));
+            // 1. Crea una Dirección parcial con solo el ID.
+            Direccion direccionParcial = new Direccion.Builder().id(datos[9]).build();
             
-            TipoDocumento tipoDoc = tipoDocumentoDAO
-                            .findBy(t -> t.getTipo().toString().equalsIgnoreCase(datos[3]))
-                            .stream()
-                            .findFirst()
-                            .orElseThrow(() -> new EntidadNoEncontradaException("No se encontró un tipo de documento con el nombre: " + datos[3]));
+            // 2. Crea un TipoDocumento parcial con solo el enum.
+            TipoDocumento tipoDocParcial = new TipoDocumento();
+            tipoDocParcial.setTipo(TipoDocumento.tipoDocumentoEnum.valueOf(datos[3]));
 
             return new Huesped.Builder()
                 .nombre(datos[0]).apellido(datos[1]).cuit(datos[2])
-                .tipoDocumento(tipoDoc).nroDocumento(datos[4])
+                .tipoDocumento(tipoDocParcial)
+                .nroDocumento(datos[4])
                 .fechaDeNacimiento(fechaNac)
                 .email(datos[6]).telefono(datos[7]).ocupacion(datos[8])
-                .direccion(direccion)
+                .direccion(direccionParcial) 
                 .build();
-        } catch (EntidadNoEncontradaException | DateTimeParseException | ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+        } catch (DateTimeParseException | ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new PersistenciaException("Error al parsear la línea del archivo de huéspedes: " + linea, e);
         }
     }
-
     
 
     // Escribe una lista de huespedes al archivo, sobreescribiendo el contenido
@@ -170,8 +163,6 @@ public class HuespedArchivoDAO implements IHuespedDAO{
                         try {
                             return mapToHuesped(line);
                         } catch (PersistenciaException e) {
-                            throw new RuntimeException(e);
-                        } catch (ValidacionException e) {
                             throw new RuntimeException(e);
                         } catch (Exception e) {
                             throw new RuntimeException(e);

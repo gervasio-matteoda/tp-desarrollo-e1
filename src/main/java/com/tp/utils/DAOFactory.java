@@ -33,4 +33,8 @@ public class DAOFactory {
     public static ITipoDocumento getTipoDocumentoDAO(){
         return TipoDocumentoArchivoDAO.getInstancia();
     }
+
+    public static IOcupacionDAO getOcupacionDAO() {
+        return OcupacionArchivoDAO.getInstancia();
+    }
 }

@@ -1,1 +1,1 @@
-nombre,apellido,cuit,tipoDoc,nroDoc,fechaNac,email,telefono,ocupacion,calle,nroCalle,depto,codPostal,ciudad,provincia,pais
+nombre,apellido,cuit,tipoDoc,nroDoc,fechaNac,email,telefono,ocupacion,idDireccion
